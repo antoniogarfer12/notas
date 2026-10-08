@@ -5,8 +5,7 @@ Bloc de notas web compartido que se sincroniza en tiempo real entre todas las pe
 ## Funciones
 
 - Crear, editar, buscar y borrar notas
-- Texto con formato (editor [Quill](https://quilljs.com)): tipo y tamaño de letra, títulos, negrita, cursiva, subrayado, tachado, colores, resaltado, alineación y enlaces
-- Checklists con casillas que se pueden marcar, además de listas con viñetas y numeradas
+- Checklists: el botón **☑ Checklist** convierte las líneas en tareas con casillas que se pueden marcar (editor [Quill](https://quilljs.com))
 - Sincronización casi instantánea (los cambios se envían a los 250 ms de dejar de escribir)
 - Indicador de conexión y número de personas en línea
 - Enlace directo a cada nota (`…/#idDeLaNota`)

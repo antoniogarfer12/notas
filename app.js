@@ -9,6 +9,7 @@ const $ = (id) => document.getElementById(id);
 const els = {
   sidebar: $("sidebar"), list: $("noteList"), search: $("search"),
   newNote: $("newNote"), del: $("deleteNote"), toggle: $("toggleSidebar"),
+  checklist: $("checklist"),
   title: $("title"), content: $("content"), saved: $("saved"),
   conn: $("conn"), connText: $("connText"), online: $("online"),
 };
@@ -21,7 +22,8 @@ if (!firebaseConfig.databaseURL) {
 const Delta = Quill.import("delta");
 const quill = new Quill(els.content, {
   theme: "snow",
-  modules: { toolbar: "#toolbar" },
+  modules: { toolbar: false, keyboard: { bindings: { "list autofill": null } } },
+  formats: ["list"], // solo checklist; el resto del formato se ignora
   placeholder: "Crea o selecciona una nota…",
 });
 quill.enable(false);
@@ -131,8 +133,7 @@ function selectNote(id) {
   currentId = id;
   const n = id ? notes[id] : null;
   history.replaceState(null, "", id ? `#${id}` : location.pathname);
-  els.title.disabled = els.del.disabled = !n;
-  $("editor").classList.toggle("no-note", !n);
+  els.title.disabled = els.del.disabled = els.checklist.disabled = !n;
   els.title.value = n?.title || "";
   quill.setContents(n ? toDelta(n.content) : new Delta(), "silent");
   quill.history.clear();
@@ -186,6 +187,19 @@ function flush() {
 
 els.title.addEventListener("input", scheduleSave);
 quill.on("text-change", (_delta, _old, source) => { if (source === "user") scheduleSave(); });
+
+// Botón Checklist: convierte las líneas seleccionadas en tareas, o las vuelve a texto normal
+const isCheck = (f) => f.list === "checked" || f.list === "unchecked";
+els.checklist.addEventListener("mousedown", (e) => e.preventDefault()); // no perder el cursor
+els.checklist.onclick = () => {
+  const range = quill.getSelection(true);
+  if (!range) return;
+  quill.formatLine(range.index, range.length, "list", isCheck(quill.getFormat(range)) ? false : "unchecked", "user");
+};
+quill.on("editor-change", () => {
+  const range = quill.getSelection();
+  els.checklist.classList.toggle("active", !!range && isCheck(quill.getFormat(range)));
+});
 els.search.addEventListener("input", renderList);
 window.addEventListener("beforeunload", flush);
 
