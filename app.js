@@ -18,6 +18,30 @@ if (!firebaseConfig.databaseURL) {
   throw new Error("Firebase no configurado");
 }
 
+const Delta = Quill.import("delta");
+const quill = new Quill(els.content, {
+  theme: "snow",
+  modules: { toolbar: "#toolbar" },
+  placeholder: "Crea o selecciona una nota…",
+});
+quill.enable(false);
+
+// El contenido se guarda como JSON del documento de Quill.
+// Las notas antiguas en texto plano se siguen leyendo.
+function toDelta(content) {
+  if (content && content.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed.ops)) return new Delta(parsed.ops);
+    } catch {}
+  }
+  return new Delta().insert((content || "") + (content?.endsWith("\n") ? "" : "\n"));
+}
+
+function plainText(content) {
+  return toDelta(content).ops.map((op) => (typeof op.insert === "string" ? op.insert : "")).join("").trim();
+}
+
 const db = getDatabase(initializeApp(firebaseConfig));
 const notesRef = ref(db, "notes");
 
@@ -67,7 +91,7 @@ function sortedNotes() {
 function renderList() {
   const q = els.search.value.trim().toLowerCase();
   const items = sortedNotes().filter(([, n]) =>
-    !q || (n.title || "").toLowerCase().includes(q) || (n.content || "").toLowerCase().includes(q));
+    !q || (n.title || "").toLowerCase().includes(q) || plainText(n.content).toLowerCase().includes(q));
 
   els.list.replaceChildren();
   if (!items.length) {
@@ -85,7 +109,7 @@ function renderList() {
     t.textContent = n.title || "Sin título";
     const m = document.createElement("div");
     m.className = "n-meta";
-    m.textContent = `${timeAgo(n.updatedAt)} · ${(n.content || "").split("\n")[0].slice(0, 60)}`;
+    m.textContent = `${timeAgo(n.updatedAt)} · ${plainText(n.content).split("\n")[0].slice(0, 60)}`;
     li.append(t, m);
     li.onclick = () => { selectNote(id); els.sidebar.classList.remove("open"); };
     els.list.append(li);
@@ -107,13 +131,16 @@ function selectNote(id) {
   currentId = id;
   const n = id ? notes[id] : null;
   history.replaceState(null, "", id ? `#${id}` : location.pathname);
-  els.title.disabled = els.content.disabled = els.del.disabled = !n;
+  els.title.disabled = els.del.disabled = !n;
+  $("editor").classList.toggle("no-note", !n);
   els.title.value = n?.title || "";
-  els.content.value = n?.content || "";
+  quill.setContents(n ? toDelta(n.content) : new Delta(), "silent");
+  quill.history.clear();
+  quill.enable(!!n);
   els.saved.textContent = "";
   lastSent = null;
   renderList();
-  if (n && !n.content) els.content.focus();
+  if (n && !plainText(n.content)) quill.focus();
 }
 
 // Aplica cambios de otros usuarios conservando la posición del cursor.
@@ -121,7 +148,8 @@ function applyRemote(n) {
   if (!n || pending) return; // si estamos escribiendo, nuestros cambios mandan
   if (lastSent && n.title === lastSent.title && n.content === lastSent.content) return;
   if (els.title.value !== (n.title || "")) replaceKeepingCursor(els.title, n.title || "");
-  if (els.content.value !== (n.content || "")) replaceKeepingCursor(els.content, n.content || "");
+  const diff = quill.getContents().diff(toDelta(n.content));
+  if (diff.ops.length) quill.updateContents(diff, "silent"); // Quill desplaza la selección solo
   els.saved.textContent = `Actualizado ${timeAgo(n.updatedAt)}`;
 }
 
@@ -150,25 +178,16 @@ function flush() {
   if (!pending || !currentId) { pending = null; return; }
   clearTimeout(pending);
   pending = null;
-  lastSent = { title: els.title.value, content: els.content.value };
+  lastSent = { title: els.title.value, content: JSON.stringify({ ops: quill.getContents().ops }) };
   update(ref(db, `notes/${currentId}`), { ...lastSent, updatedAt: serverTimestamp() })
     .then(() => { els.saved.textContent = "Guardado"; })
     .catch((err) => { els.saved.textContent = `Error al guardar: ${err.message}`; });
 }
 
 els.title.addEventListener("input", scheduleSave);
-els.content.addEventListener("input", scheduleSave);
+quill.on("text-change", (_delta, _old, source) => { if (source === "user") scheduleSave(); });
 els.search.addEventListener("input", renderList);
 window.addEventListener("beforeunload", flush);
-
-// Tab inserta tabulación en lugar de cambiar el foco
-els.content.addEventListener("keydown", (e) => {
-  if (e.key === "Tab" && !e.shiftKey) {
-    e.preventDefault();
-    els.content.setRangeText("\t", els.content.selectionStart, els.content.selectionEnd, "end");
-    scheduleSave();
-  }
-});
 
 els.newNote.onclick = async () => {
   const r = push(notesRef);

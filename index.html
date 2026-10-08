@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Notas compartidas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 </head>
 <body>
   <div class="app">
@@ -28,7 +30,39 @@
         <input id="title" class="title" placeholder="Título" disabled>
         <button id="deleteNote" class="btn ghost danger" title="Borrar nota" disabled>🗑</button>
       </div>
-      <textarea id="content" class="content" placeholder="Crea o selecciona una nota…" disabled></textarea>
+      <div id="toolbar" class="toolbar">
+        <span class="ql-formats">
+          <select class="ql-font" title="Tipo de letra"></select>
+          <select class="ql-size" title="Tamaño"></select>
+          <select class="ql-header" title="Estilo de párrafo">
+            <option value="1">Título 1</option>
+            <option value="2">Título 2</option>
+            <option value="3">Título 3</option>
+            <option selected>Normal</option>
+          </select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-bold" title="Negrita (Ctrl+B)"></button>
+          <button class="ql-italic" title="Cursiva (Ctrl+I)"></button>
+          <button class="ql-underline" title="Subrayado (Ctrl+U)"></button>
+          <button class="ql-strike" title="Tachado"></button>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-color" title="Color de letra"></select>
+          <select class="ql-background" title="Resaltado"></select>
+        </span>
+        <span class="ql-formats">
+          <button class="ql-list" value="check" title="Checklist"></button>
+          <button class="ql-list" value="bullet" title="Lista con viñetas"></button>
+          <button class="ql-list" value="ordered" title="Lista numerada"></button>
+        </span>
+        <span class="ql-formats">
+          <select class="ql-align" title="Alinear"></select>
+          <button class="ql-link" title="Enlace"></button>
+          <button class="ql-clean" title="Quitar formato"></button>
+        </span>
+      </div>
+      <div id="content" class="content"></div>
       <div class="editor-foot" id="saved"></div>
     </main>
   </div>
