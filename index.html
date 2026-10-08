@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notas compartidas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar-head">
+        <h1>📝 Notas</h1>
+        <button id="newNote" class="btn" title="Nueva nota">+ Nueva</button>
+      </header>
+      <input id="search" class="search" type="search" placeholder="Buscar…">
+      <ul id="noteList" class="note-list"></ul>
+      <footer class="status">
+        <span id="conn" class="dot"></span>
+        <span id="connText">Conectando…</span>
+        <span id="online" class="online"></span>
+      </footer>
+    </aside>
+
+    <main class="editor" id="editor">
+      <div class="editor-head">
+        <button id="toggleSidebar" class="btn ghost mobile-only" title="Notas">☰</button>
+        <input id="title" class="title" placeholder="Título" disabled>
+        <button id="deleteNote" class="btn ghost danger" title="Borrar nota" disabled>🗑</button>
+      </div>
+      <textarea id="content" class="content" placeholder="Crea o selecciona una nota…" disabled></textarea>
+      <div class="editor-foot" id="saved"></div>
+    </main>
+  </div>
+
+  <div id="configError" class="config-error" hidden>
+    <h2>Falta configurar Firebase</h2>
+    <p>Edita <code>firebase-config.js</code> con los datos de tu proyecto.</p>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

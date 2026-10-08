@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "notes": {
+      ".read": true,
+      "$noteId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['updatedAt'])",
+        "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "content": { ".validate": "newData.isString() && newData.val().length <= 200000" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "presence": {
+      ".read": true,
+      "$clientId": {
+        ".write": true,
+        ".validate": "newData.isBoolean()"
+      }
+    }
+  }
+}
